@@ -1,3 +1,9 @@
+"""
+RSA implementation using Python
+Information Security 2
+Team : Subin Babu & Kalyani More
+"""
+
 import itertools
 import argparse
 import copy
@@ -6,68 +12,48 @@ import pickle
 import random
 from itertools import combinations
 
-def primeSieve(k):
-    """return a list with length k + 1, showing if list[i] == 1, i is a prime
-    else if list[i] == 0, i is a composite, if list[i] == -1, not defined"""
-    listofPrime = []
 
-    def isPrime(n):
-        """return True is given number n is absolutely prime,
-        return False is otherwise."""
-        for i in range(2, int(n ** 0.5) + 1):
-            if n % i == 0:
-                return False
-        return True
+def gen_primes(digit):
+    # type: (object) -> object
+    first_number = random.randint(10 ** (digit - 1), 10 ** digit)
+    if first_number % 2 == 0:
+        first_number += 1
+    p = get_prime(first_number)
 
-    result = [-1] * (k + 1)
-    for i in range(2, int(k + 1)):
-        if isPrime(i):
-            listofPrime.append(i)
-            result[i] = 1
-        else:
-            result[i] = 0
-    return listofPrime
+    second_number = random.randint(10 ** (digit - 1), 10 ** digit)
+    if second_number % 2 == 0:
+        second_number += 1
+    q = get_prime(second_number)
 
-def genPrimes(digit):
-    firstNumber = random.randint(10**(digit-1),10**(digit))
-    if(firstNumber%2 ==0):
-        firstNumber += 1
-    p = getPrime(firstNumber)
+    while p == q:
+        second_number = random.randint(10 ** (digit - 1), 10 ** digit)
+        if second_number % 2 == 0:
+            second_number += 1
+        q = get_prime(second_number)
 
-    secondNumber = random.randint(10 ** (digit - 1), 10 ** (digit))
-    if (secondNumber % 2 == 0):
-        secondNumber += 1
-    q = getPrime(secondNumber)
-
-    while (p ==q):
-        secondNumber = random.randint(10 ** (digit - 1), 10 ** (digit))
-        if (secondNumber % 2 == 0):
-            secondNumber += 1
-        q = getPrime(secondNumber)
-
-    return p,q
+    return p, q
 
 
-def genKey(digits):
-    p,q = genPrimes(digits)
+def gen_key(digits):
+    p, q = gen_primes(digits)
 
     n = p * q
-    phiN = (p - 1) * (q - 1)
+    phi_of_n = (p - 1) * (q - 1)
     while True:
-        e = random.randint(1, phiN)
-        if coPrime(e, phiN):
+        e = random.randint(1, phi_of_n)
+        if is_co_prime(e, phi_of_n):
             break
-    d = moduloInverse(e, phiN)
-    return n,e,d
+    d = get_modulo_inverse(e, phi_of_n)
+    return n, e, d
 
 
-def coPrime(i, j):
-    if getGCD(i, j) != 1:
+def is_co_prime(i, j):
+    if get_gcd(i, j) != 1:
         return False
     return True
 
 
-def getGCD(a, b):
+def get_gcd(a, b):
     if a < b:
         temp = b
         b = a
@@ -79,31 +65,30 @@ def getGCD(a, b):
     return a
 
 
-def moduloInverse(a, b):
-    if coPrime(a, b):
-        euclidAnswer = extendedEuclid(a, b)
-        return euclidAnswer[1] % b
+def get_modulo_inverse(a, b):
+    if is_co_prime(a, b):
+        euclid_answer = perform_extended_euclid(a, b)
+        return euclid_answer[1] % b
     else:
         return 0
 
 
-def extendedEuclid(a, b):
+def perform_extended_euclid(a, b):
     if a == 0:
         return b, 0, 1
     else:
-        euclidAnswer = extendedEuclid(b % a, a)
-        g = euclidAnswer[0]
-        y = euclidAnswer[1]
-        x = euclidAnswer[2]
+        euclid_answer = perform_extended_euclid(b % a, a)
+        g = euclid_answer[0]
+        y = euclid_answer[1]
+        x = euclid_answer[2]
         return g, x - (b / a) * y, y
 
-def rabinMiller(num):
-    # Returns True if num is a prime number.
 
+def is_composite_using_miller_rabin(num):
     s = num - 1
     t = 0
     while s % 2 == 0:
-        s = s // 2
+        s //= 2
         t += 1
 
     for trials in range(5):
@@ -115,38 +100,42 @@ def rabinMiller(num):
                 if i == t - 1:
                     return False
                 else:
-                    i = i + 1
+                    i += 1
                     v = (v ** 2) % num
     return True
 
 
-def getPrime(x):
-    while (not rabinMiller(x)):
-        x +=2
-    return x;
+def get_prime(x):
+    while not is_composite_using_miller_rabin(x):
+        x += 2
+    return x
 
-def modExp(a, d, n):
-    binnary = "{0:b}".format(d)
+
+def perform_exponent_and_mod(a, d, n):
+    binary_format = "{0:b}".format(d)
     s = a
     out = 1
-    i = len(binnary)-1
-    while(i>=0):
-        if(binnary[i]=="1"):
-            out = (out * s ) % n
+    i = len(binary_format) - 1
+    while i >= 0:
+        if binary_format[i] == "1":
+            out = (out * s) % n
         s = (s * s) % n
         i -= 1
     return out
 
-def encrypt(message, modN, e, blockSize):
-    numList = string2numList(message)
-    numBlocks = numList2blocks(numList, blockSize)
 
-    encryptedMessage = []
+def encrypt(message, mod_of_n, e, block_size):
+    num_list = string2numList(message)
+    num_blocks = numList2blocks(num_list, block_size)
 
-    for blocks in numBlocks:
-        encryptedMessage.append(modExp(blocks, e, modN))
+    # perform encryption
+    encrypted_message = []
 
-    return encryptedMessage
+    for blocks in num_blocks:
+        encrypted_message.append(perform_exponent_and_mod(blocks, e, mod_of_n))
+
+    return encrypted_message
+
 
 def string2numList(strn):
     """Converts a string to a list of integers based on ASCII values"""
@@ -190,16 +179,21 @@ def blocks2numList(blocks, n):
         returnList.extend(inner)
     return returnList
 
-def decrypt(secret, modN, d, blockSize):
-    numBlocks = []
-    for blocks in secret:
-        numBlocks.append(modExp(blocks, d, modN))
 
-    numList = blocks2numList(numBlocks, blockSize)
-    return numList2string(numList)
+def decrypt(secret, mod_of_n, d, block_size):
+    # perform decryption
+    num_blocks = []
+    for blocks in secret:
+        num_blocks.append(perform_exponent_and_mod(blocks, d, mod_of_n))
+
+    num_list = blocks2numList(num_blocks, block_size)
+    return numList2string(num_list)
+
 
 if __name__ == '__main__':
-    n, e, d = genKey(100)
+    # key generation
+    n, e, d = gen_key(100)
+
     print ('n = {0}'.format(n))
     print ('e = {0}'.format(e))
     print ('d = {0}'.format(d))

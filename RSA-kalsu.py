@@ -4,13 +4,8 @@ Information Security 2
 Team : Subin Babu & Kalyani More
 """
 
-import itertools
-import argparse
 import copy
-import math
-import pickle
 import random
-from itertools import combinations
 
 
 def gen_primes(digit):
@@ -191,7 +186,7 @@ def decrypt(secret, mod_of_n, d, block_size):
 
 
 if __name__ == '__main__':
-    # key generation
+    # 100 - digit key generation 
     n, e, d = gen_key(100)
 
     print ('n = {0}'.format(n))

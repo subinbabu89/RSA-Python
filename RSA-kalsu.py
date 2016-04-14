@@ -107,6 +107,9 @@ def get_prime(x):
 
 
 def perform_exponent_and_mod(a, d, n):
+    """
+    Provided by Dr Wright in class
+    """
     binary_format = "{0:b}".format(d)
     s = a
     out = 1
@@ -186,7 +189,7 @@ def decrypt(secret, mod_of_n, d, block_size):
 
 
 if __name__ == '__main__':
-    # 100 - digit key generation 
+    # 100 - digit key generation
     n, e, d = gen_key(100)
 
     print ('n = {0}'.format(n))
